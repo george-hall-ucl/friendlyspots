@@ -98,3 +98,27 @@ test_that("reproduces the pig esophagus paper's similarities", {
   paper[1, 2] <- paper[2, 1] <- 0.02
   expect_equal(round(sim, 2), paper)
 })
+
+test_that("only_transitions drops same-label contacts", {
+  sim <- spatial_similarity(samples, normalize = FALSE, only_transitions = TRUE)
+  expect_sim(sim, 0.5, 0, 0.5)
+})
+
+test_that("a sample with only one label has no transitions, NA with a warning", {
+  expect_warning(sim <- spatial_similarity(samples, only_transitions = TRUE),
+                 "no neighboring spots: C")
+  expect_equal(sim["A", "B"], 1)
+  expect_true(all(is.na(sim["C", ])) && all(is.na(sim[, "C"])))
+})
+
+test_that("only_transitions = FALSE gives the original result", {
+  expect_equal(spatial_similarity(samples, only_transitions = FALSE),
+               spatial_similarity(samples))
+})
+
+test_that("only_transitions works with pools", {
+  pools <- list(p1 = c("A", "B"), p2 = "C", p3 = "A")
+  sim <- spatial_similarity(samples, normalize = FALSE, pools = pools,
+                            only_transitions = TRUE)
+  expect_sim(sim, 0, 2 / 3, 1 / 3)
+})
